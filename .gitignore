@@ -45,5 +45,5 @@ sdk
 
 # folder for build output
 dist
-bin
-obj
+*bin
+*obj
