@@ -41,19 +41,19 @@ void executaMenuPrincipal(){
     system("clear");
     resposta = exibeMenu(menuPrincipal);
     switch (resposta){
-        case 1:
+        case 1: //Web Browser
 
             break;
-        case 2:
+        case 2: //Text Editor
 
             break;
-        case 3:
+        case 3: //Terminal
 
             break;
-        case 4:
+        case 4: //Finalizar Processo
 
             break;
-        case 5:
+        case 5: //Sair
 
             break;
         default:
