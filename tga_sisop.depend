@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1491353224 source:/home/matheus/Projects/tga_sisop/main.c
+	<stdio.h>
+	<stdlib.h>
+	<unistd.h>
+	"menu.h"
+
+1491353121 /home/matheus/Projects/tga_sisop/menu.h
+
