@@ -47,3 +47,4 @@ sdk
 dist
 bin/
 obj/
+*.layout
