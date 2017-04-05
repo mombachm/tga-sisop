@@ -7,3 +7,11 @@
 
 1491353121 /home/matheus/Projects/tga_sisop/menu.h
 
+1490929925 source:/home/mombachm/projects/tga-sisop/main.c
+	<stdio.h>
+	<stdlib.h>
+	<unistd.h>
+	"menu.h"
+
+1490929925 /home/mombachm/projects/tga-sisop/menu.h
+
