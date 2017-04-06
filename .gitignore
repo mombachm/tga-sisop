@@ -48,3 +48,4 @@ dist
 bin/
 obj/
 *.layout
+*.depend
