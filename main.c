@@ -2,23 +2,67 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "menu.h"
 
+#define _POSIX_SOURCE
+#define TEMPO_ALARME 5
+
 struct Menu menuPrincipal;
 
 
+void sig_handler(int signo);
+void init_sigaction(struct sigaction* conf_sinal);
+
+pid_t pidGedit = 0, pidFirefox = 0, pidTerminal = 0;
 
 int main(int argc, char argv[]){
-	montaMenuPrincipal();
-	executaMenuPrincipal();
+
+
+//    if (signal(SIGALRM, sig_handler) == SIGCHLD)
+  //      printf("\nErro ao tratar o sinal SIGCHLD\n");
+
+    struct sigaction conf_sinal;
+    init_sigaction(&conf_sinal);
+    conf_sinal.sa_handler = &sig_handler; //acao customizada pelo processo
+
+
+    if(sigaction(SIGINT, &conf_sinal, NULL)){
+        err_exit("erro ao instalar tratador do SIGINT.");
+    }
+
+
+    //conf_sinal.sa_handler = ;
+    if(sigaction(SIGALRM, &conf_sinal, NULL)){
+        err_exit("erro ao instalar tratador do SIGALARM.");
+    }
+
+    //alarm(TEMPO_ALARME);
+
+	//montaMenuPrincipal();
+
+    //if (signal(SIGCHLD, sig_handler) == SIGCHLD)
+    //    printf("\nErro ao tratar o sinal SIGCHLD\n");
+
+	//executaMenuPrincipal();
+    while(1){
+        printf("teste");
+        sleep(2);
+        printf("teste");
+    }
 
 	return EXIT_SUCCESS;
 }
 
-void sig_handler(int signo);
-
+void init_sigaction(struct sigaction* conf_sinal) {
+    memset(conf_sinal, 0, sizeof(struct sigaction));
+    conf_sinal->sa_flags = 0;
+    conf_sinal->sa_restorer = NULL;
+    sigemptyset(&conf_sinal->sa_mask);
+    conf_sinal->sa_handler = NULL;
+}
 
 /**
 Função que inicializa o menu principal, montando o título e seus menus.
@@ -44,50 +88,78 @@ Nesta função são tratados as ações de acordo com a opção escolhida pelo u
 */
 void executaMenuPrincipal(){
     int resposta;
-    unsigned int id;
 
-    if (signal(SIGINT, sig_handler) == SIG_ERR)
-        printf("\nNão consegui pegar o SIGINT\n");
 
     system("clear");
     resposta = exibeMenu(menuPrincipal);
+
+    int teste;
+
     switch (resposta){
         case 1: //Web Browser
 			printf("Digite o site que gostaria de visitar: \n");
-			char* s;
-			scanf("%s", s);
-			execl("/usr/bin/firefox", "firefox", s, NULL);
-			pid_t firefox = fork(); // não tá funcionando
-			printf("(executando, pid=%d)\n", firefox);
+			char strUrl[50];
+			scanf("%s", &strUrl);
+            pidFirefox = fork();
+			if (pidFirefox == 0) { //child process
+                execl("/usr/bin/firefox", "firefox", strUrl, NULL);
+			} else if (pidFirefox < 0) { //Fork error
+                printf("Failed to fork.");
+                exit(1);
+			} else { //parent process
+                printf("(executando, pid=%d)\n", pidFirefox);
+			}
+
+
 			break;
         case 2: //Text Editor
-			execl("/usr/bin/gedit", "gedit", NULL);
-			pid_t gedit = fork(); // não tá funcionando
-			printf("(executando, pid=%d)\n", gedit);
+            pidGedit = fork();
+			if (pidGedit == 0) { //child process
+                execl("/usr/bin/gedit", "gedit", NULL);
+			} else if (pidGedit < 0) { //Fork error
+                printf("Failed to fork.");
+                exit(1);
+			} else { //parent process
+                printf("(executando, pid=%d)\n", pidGedit);
+			}
+
+
 			break;
         case 3: //Terminal
-			system("gnome-terminal");
-			pid_t terminal = fork(); // não tá funcionando
-			printf("(executando, pid=%d)\n", terminal);
+            pidTerminal = fork();
+			if (pidTerminal == 0) { //child process
+                execl("/usr/bin/gnome-terminal", "gnome-terminal", NULL);
+			} else if (pidTerminal < 0) { //Fork error
+                printf("Failed to fork.");
+                exit(1);
+			} else { //parent process
+                printf("(executando, pid=%d)\n", pidTerminal);
+			}
 			break;
         case 4: //Finalizar Processo
-			printf("Qual processo deseja terminar?\n");
-			printf("1) Web Browser\n");
-			printf("2) Text Editor\n");
-			printf("3) Terminal\n");
-
-			int proc;
-			scanf("%d", &proc);
-			if (proc == 1)
-				kill(firefox, SIGTERM);
-			if (proc == 2)
-				kill(gedit, SIGTERM);
-			if (proc == 3)
-				kill(terminal, SIGTERM);
-
+			printf("\n\tQual processo deseja terminar?\n");
+			printf("\t1) Web Browser\n");
+			printf("\t2) Text Editor\n");
+			printf("\t3) Terminal\n");
+			scanf(" %d", &teste);
+            switch (teste) {
+                case 1:
+                    killProc(pidFirefox);
+                    break;
+                case 2:
+                    killProc(pidGedit);
+                    break;
+                case 3:
+                    killProc(pidTerminal);
+                    break;
+                default:
+                    printf("\n\tOpção inválida.\n");
+                    break;
+            }
+            getchar();
 			break;
         case 5: //Sair
-
+            exit(EXIT_SUCCESS);
             break;
         default:
             printf("\n\tOpção inválida!\n");
@@ -96,11 +168,32 @@ void executaMenuPrincipal(){
     printf("\n\n");
     printf("\tPressione uma tecla para continuar...");
     getchar();
-    return executaMenuPrincipal();
+    executaMenuPrincipal();
 }
 
 void sig_handler(int signo) {
+    /*if (signo != SIGALRM) alarm(0); //desarma o alarme se foi acionado pelo Ctrl+C
 	if (signo == SIGINT)
-		printf("Relebeu sinal.");
+		executaMenuPrincipal();
+
+    if (signo == SIGCHLD)
+		executaMenuPrincipal();*/
+
+    printf("alarme");
+}
+
+void err_exit(char* msgerro){
+    perror(msgerro);
+    exit(EXIT_FAILURE);
+}
+
+void killProc(pid_t pid) {
+    if (pid > 0) {
+        if (kill(pid, SIGTERM) < 0)
+            printf("\n\tFalha ao finalizar o processo.\n");
+        else
+            printf("\n\tProcesso terminado com sucesso.\n");
+    } else
+        printf("\n\tProcesso inválido.\n");
 }
 
